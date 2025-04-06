@@ -4,7 +4,7 @@ A Retrieval-Augmented Generation (RAG) chatbot built to answer customer support 
 
 Powered by FAISS for vector search and a lightweight LLM (TinyLlama) for local inference.
 
-![Chatbot Screenshot](output images\Gradio output (ONLINE).jpg)
+![Chatbot Screenshot](output%20images/Gradio%20output%20(ONLINE).jpg)
 
 ---------------------------
 
