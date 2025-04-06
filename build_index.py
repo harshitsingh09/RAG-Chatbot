@@ -2,17 +2,23 @@ from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from langchain_community.vectorstores import FAISS
+from langchain.schema import Document
 import faiss
 import pickle
 import os
 
 docs = []
+
 for file in os.listdir("docs"):
     path = os.path.join("docs", file)
     if file.endswith(".pdf"):
         docs.extend(PyPDFLoader(path).load())
     elif file.endswith(".docx"):
         docs.extend(Docx2txtLoader(path).load())
+    elif file.endswith(".txt"):
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+            docs.append(Document(page_content=content))  # Wrap in Document object
 
 # Split text into chunks
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
