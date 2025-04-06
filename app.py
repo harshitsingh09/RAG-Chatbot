@@ -1,19 +1,46 @@
-# app.py
 import gradio as gr
+from sentence_transformers import SentenceTransformer
+import faiss
+import pickle
+from llama_cpp import Llama
 
+# Load local LLM
+llm = Llama(
+    model_path="mistral.gguf",
+    n_ctx=2048,
+    n_threads=6,
+    n_gpu_layers=0
+)
+
+# Load vector index and chunks
+model = SentenceTransformer("all-MiniLM-L6-v2")
+index = faiss.read_index("faiss_index.index")
+with open("chunks.pkl", "rb") as f:
+    chunks = pickle.load(f)
+
+# RAG function
 def rag_chatbot(query):
-    # Dummy logic — simulate RAG response
-    if "account" in query.lower():
-        return "You can create an account by visiting the Angel One sign-up page."
-    else:
+    query_vec = model.encode([query])
+    D, I = index.search(query_vec, k=4)
+    retrieved_docs = [chunks[i] for i in I[0] if i < len(chunks)]
+
+    if not retrieved_docs:
         return "I Don't know"
 
-iface = gr.Interface(fn=rag_chatbot,
-                     inputs=gr.Textbox(placeholder="Ask your support question here..."),
-                     outputs="text",
-                     title="Angel One Support Chatbot",
-                     description="Ask anything related to Angel One support. (RAG logic placeholder)"
-                     )
+    context = "\n".join(retrieved_docs)
 
-if __name__ == "__main__":
-    iface.launch()
+    prompt = f"""You are a helpful customer support assistant. Answer ONLY using the context provided below.
+If the answer is not in the context, say "I Don't know".
+
+Context:
+{context}
+
+Question: {query}
+Answer:"""
+
+    response = llm(prompt, max_tokens=256, temperature=0.7, stop=["</s>"])
+    return response["choices"][0]["text"].strip()
+
+# Gradio interface
+iface = gr.Interface(fn=rag_chatbot, inputs="text", outputs="text", title="Angel One Support Bot (Local)")
+iface.launch()
