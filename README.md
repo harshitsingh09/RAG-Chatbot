@@ -11,6 +11,7 @@ A locally hosted RAG chatbot that uses customer support docs + insurance PDFs fr
 pip install -r requirements.txt
 python build_index.py   # Create vector index
 python app.py           # Launch Gradio chatbot
+```
 
 ## Hosted Demo (Huggingface Spaces)
 
